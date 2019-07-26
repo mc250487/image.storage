@@ -1,32 +1,30 @@
-﻿namespace Image.Storage.Protocol
+﻿using System.IO;
+
+namespace Image.Storage.Protocol
 {
-    public class Image
+    public class ImageInfo
     {
         public string Id { get; set; }
 
         public string MimeType { get; set; }
-
-        public string Name { get; set; }
     }
 
-    public class UploadImageRequest
+    public class Image: ImageInfo
     {
-        public LocalImage[] LocalImages { get; set; }
-
-        public RemoteImage[] RemoteImages { get; set; }
+        public Stream Content { get; set; }
     }
 
-    public class LocalImage
+    public class SaveImageRequest
     {
-        public string MimeType { get; set; }
-
         public string Name { get; set; }
 
-        public byte[] Content { get; set; }
+        public Stream Content { get; set; }
     }
 
-    public class RemoteImage
+    public class ImageRequest
     {
-        public string Url { get; set; }
+        public string Id { get; set; }
+
+        public bool Preview { get; set; }
     }
 }

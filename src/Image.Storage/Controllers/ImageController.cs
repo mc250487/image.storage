@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Image.Storage.InternalServices;
 
 namespace Image.Storage.Controllers
 {
@@ -12,91 +13,85 @@ namespace Image.Storage.Controllers
     [ApiController]
     public class ImageController : ControllerBase
     {
-        private readonly IImageFileStorage _imageFileStorage;
+        private readonly IImageRepository _imageRepository;
 
-        public ImageController(IImageFileStorage imageFileStorage)
+        public ImageController(IImageRepository imageRepository)
         {
-            _imageFileStorage = imageFileStorage;
+            _imageRepository = imageRepository;
         }
 
         [HttpPost]
         [Route("")]
-        public async Task<Protocol.Image[]> UploadAsync(
+        public async Task<Protocol.ImageInfo[]> UploadAsync(
             [ModelBinder(BinderType = typeof(JsonModelBinder))]
             UploadImageRequest json,
             List<IFormFile> images
             )
         {
-            var files = new List<Protocol.Image>();
-
-            foreach (var image in images)
+            using (var stream = images[0].OpenReadStream())
             {
-                if (image.Length > 0)
+                var image = _imageRepository.Save(new SaveImageRequest
                 {
-                    using (var stream = image.OpenReadStream())
-                    {
-                        var imageFile = await _imageFileStorage.SaveImageAsync(stream);
+                    Name = images[0].FileName,
+                    Content = stream
+                });
 
-                        files.Add(new Protocol.Image
-                        {
-                            Id = imageFile.FileId,
-                            MimeType = image.ContentType,
-                            Name = image.FileName
-                        });
-                    }
-                }
+                await Task.CompletedTask;
+
+                return new[] { image };
             }
-
-            if ((json?.LocalImages?.Length ?? 0) > 0)
-            {
-                foreach (var image in json.LocalImages)
-                {
-                    var fileInfo = await _imageFileStorage.SaveImageAsync(image.Content);
-
-                    files.Add(new Protocol.Image
-                    {
-                        Id = fileInfo.FileId,
-                        MimeType = image.MimeType,
-                        Name = image.Name
-                    });
-                }
-            }
-
-            return files.ToArray();
         }
 
         [HttpGet]
         [Route("{id}")]
         public ActionResult Download(string id)
         {
-            var stream = _imageFileStorage.LoadImage(new LoadImageFileRequest
+            var image = _imageRepository.Load(new ImageRequest
             {
-                FileId = id
+                Id = id
             });
 
-            if (stream == null)
+            if (image != null)
             {
-                return NotFound();
+                return File(image.Content, image.MimeType); 
             }
+            return NotFound();
 
-            return File(stream, "image/jpeg");
         }
 
         [HttpGet]
         [Route("{id}/preview")]
         public ActionResult DownloadPreview(string id)
         {
-            var stream = _imageFileStorage.LoadPreview(new LoadImageFileRequest
+            var image = _imageRepository.Load(new ImageRequest
             {
-                FileId = id
+                Id = id,
+                Preview = true
             });
 
-            if (stream == null)
+            if (image != null)
             {
-                return NotFound();
+                return File(image.Content, image.MimeType);
             }
 
-            return File(stream, "image/jpeg");
+            return NotFound();
+        }
+
+        [HttpGet]
+        [Route("{id}/info")]
+        public ActionResult GetInfo(string id)
+        {
+            var image = _imageRepository.LoadInfo(new ImageRequest
+            {
+                Id = id
+            });
+
+            if (image != null)
+            {
+                return Ok(image);
+            }
+
+            return NotFound();
         }
     }
 }
