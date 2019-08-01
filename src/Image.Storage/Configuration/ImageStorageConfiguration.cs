@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Image.Storage.Configuration
@@ -10,13 +11,11 @@ namespace Image.Storage.Configuration
 
         string StorageDbFileName { get; }
 
-        string ImageFilesLocation { get; }
-
-        string PreviewImageFilesLocation { get; }
-
         int ImagePreviewWidth { get; }
 
         int ImagePreviewHeight { get; }
+
+        HashSet<string> ImageMimeTypes { get; }
     }
 
     public class ImageStorageConfiguration : IImageStorageConfiguration
@@ -28,13 +27,22 @@ namespace Image.Storage.Configuration
 
         public string StorageDbFileName => _configuration.GetValue<string>("Storage:DbFileName");
 
-        public string ImageFilesLocation => _configuration.GetValue<string>("ImageFileStorage:Location");
-
-        public string PreviewImageFilesLocation => _configuration.GetValue<string>("ImageFileStorage:PreviewLocation");
-
         public int ImagePreviewWidth => _configuration.GetValue<int>("ImagePreview:Width");
 
         public int ImagePreviewHeight => _configuration.GetValue<int>("ImagePreview:Height");
+
+        public HashSet<string> ImageMimeTypes { get; } = new HashSet<string>
+        {
+            "image/gif",
+            "image/jpeg",
+            "image/pjpeg",
+            "image/png",
+            "image/svg+xml",
+            "image/tiff",
+            "image/vnd.microsoft.icon",
+            "image/vnd.wap.wbmp",
+            "image/webp"
+        };
 
         private readonly IConfiguration _configuration;
 

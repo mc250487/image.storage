@@ -25,14 +25,14 @@ namespace Image.Storage
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.AddTransient(typeof(IImageStorageConfiguration), typeof(ImageStorageConfiguration));
-
-            //services.AddTransient(typeof(IImageFileStorage), typeof(ImageFileStorage));
-
-            //services.AddTransient(typeof(IImagePreviewBuilder), typeof(ImagePreviewBuilder));
-
+            
             services.AddTransient(typeof(IFileStorage), typeof(FileStorage));
+
             services.AddTransient(typeof(IImagePreviewProvider), typeof(ImagePreviewProvider));
+
             services.AddTransient(typeof(IImageRepository), typeof(ImageRepository));
+
+            services.AddTransient(typeof(IImageUploader), typeof(ImageUploader));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
